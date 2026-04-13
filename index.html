@@ -68,66 +68,65 @@
     return c;
   }
 
-  // Bird sprites - three frames (wings up, middle, down)
-  // 19x13 pixels, scaled up. Fat-lipped beak with upper/lower lip and shading.
+  // Bird sprites - eagle, three frames (wings up, middle, down)
+  // 19x13 pixels, scaled up.
   const birdPalette = {
-    K: '#000000',     // outline
-    Y: '#f8d030',     // body yellow
-    O: '#f8a028',     // belly orange
-    W: '#ffffff',     // eye white / wing feathers
-    B: '#202020',     // pupil
-    R: '#f83030',     // beak red
-    P: '#ff9090',     // beak pink highlight (top lip)
-    M: '#a01818',     // beak dark red shadow (lip separator / under lip)
-    D: '#e09020',     // wing/belly shadow
-    L: '#fff8c0',     // head highlight
+    K: '#000000',     // outline / pupil
+    W: '#ffffff',     // white head feathers
+    G: '#b8b8c0',     // head shadow
+    E: '#f8a830',     // amber eye
+    Y: '#f8c830',     // yellow beak
+    O: '#b86820',     // beak shadow
+    B: '#2a1c0a',     // dark brown body
+    N: '#6a4820',     // medium brown wing/body highlight
+    T: '#9a7040',     // tan feather highlight
   };
 
   const birdMid = [
     '.....KKKKKK........',
-    '...KKYYYYYYKK......',
-    '..KYYYLLYYYYKK.....',
-    '.KYYLLYYYYYYKWKK...',
-    'KYYYYYYYYYYYKWBWK..',
-    'KYYYKKKKKYYYKKKKKKK',
-    'KYYKWWWWKYYYKKPPPPK',
-    'KYYKWWWKKYYYKPRRRRK',
-    'KYYYKKYYYYYYKKMMMKK',
-    '.KYYYYYYYYYOKRRRRPK',
-    '..KDDDDDDOOOKKKKKKK',
-    '...KDDDDDDDKK......',
+    '...KKWWWWWWKK......',
+    '..KWWWWGWWWWKK.....',
+    '.KWWWWWWWWWWKEKK...',
+    'KWWWWWWWWWWWKEKEK..',
+    'KWWWWWWWWWWWKKKKKKK',
+    'KNNKKKKNNWWWKYYYYYK',
+    'KBBBNTNBBBNNKKYYYYK',
+    'KBBNTTTNBBBBKKKYYOK',
+    '.KBBNNBBBBNNBKKYOOK',
+    '..KBBBBBBBBNKKKKKK.',
+    '...KBBBBBBBKK......',
     '.....KKKKKK........',
   ];
 
   const birdUp = [
     '.....KKKKKK........',
-    '...KKYYYYYYKK......',
-    '..KYYYLLYYYYKK.....',
-    '.KYYLLYYYYYYKWKK...',
-    'KYYYKKKKKYYYKWBWK..',
-    'KYYKWWWWKYYYKKKKKKK',
-    'KYYKWWWKKYYYKKPPPPK',
-    'KYYYKKYYYYYYKPRRRRK',
-    'KYYYYYYYYYYYKKMMMKK',
-    '.KYYYYYYYYYOKRRRRPK',
-    '..KDDDDDDOOOKKKKKKK',
-    '...KDDDDDDDKK......',
+    '...KKWWWWWWKK......',
+    '..KWWWWGWWWWKK.....',
+    '.KWWWWWWWWWWKEKK...',
+    'KWWWWWWWWWWWKEKEK..',
+    'KNKKKKWWWWWWKKKKKKK',
+    'KNTTNKKKNNNNKYYYYYK',
+    'KBNTTTNKKWNNKKYYYYK',
+    'KBBBBBBBBNNNKKKYYOK',
+    '.KBBBBBBBBBNBKKYOOK',
+    '..KBBBBBBBBNKKKKKK.',
+    '...KBBBBBBBKK......',
     '.....KKKKKK........',
   ];
 
   const birdDown = [
     '.....KKKKKK........',
-    '...KKYYYYYYKK......',
-    '..KYYYLLYYYYKK.....',
-    '.KYYLLYYYYYYKWKK...',
-    'KYYYYYYYYYYYKWBWK..',
-    'KYYYYYYYYYYYKKKKKKK',
-    'KYYYKKKKKYYYKKPPPPK',
-    'KYYKWWWWKYYYKPRRRRK',
-    'KYYKWWWKKYYYKKMMMKK',
-    '.KYYKKYYYYYOKRRRRPK',
-    '..KDDDDDDOOOKKKKKKK',
-    '...KDDDDDDDKK......',
+    '...KKWWWWWWKK......',
+    '..KWWWWGWWWWKK.....',
+    '.KWWWWWWWWWWKEKK...',
+    'KWWWWWWWWWWWKEKEK..',
+    'KWWWWWWWWWWWKKKKKKK',
+    'KNNNNNNNNWWWKYYYYYK',
+    'KNBBBBBBBNNNKKYYYYK',
+    'KBTTKKKKNBBBKKKYYOK',
+    '.KNTTTTNBBBNBKKYOOK',
+    '..KNNTTBBBBNKKKKKK.',
+    '...KBBBBBBBKK......',
     '.....KKKKKK........',
   ];
 
