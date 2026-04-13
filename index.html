@@ -232,6 +232,85 @@
     return c;
   })();
 
+  // --- Sound effects (Web Audio) ---
+  let audioCtx = null;
+  let muted = false;
+  function ensureAudio() {
+    if (!audioCtx) {
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) { audioCtx = null; }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function playTone({ freq = 440, endFreq = null, type = 'square', dur = 0.1, gain = 0.15, attack = 0.005, release = 0.05, delay = 0 }) {
+    const ctx = ensureAudio();
+    if (!ctx || muted) return;
+    const t0 = ctx.currentTime + delay;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if (endFreq !== null) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(1, endFreq), t0 + dur);
+    }
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(gain, t0 + attack);
+    g.gain.linearRampToValueAtTime(gain, t0 + Math.max(attack, dur - release));
+    g.gain.linearRampToValueAtTime(0, t0 + dur);
+    osc.connect(g).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+  }
+
+  function playNoise({ dur = 0.15, gain = 0.2, filterFreq = 2000, delay = 0 }) {
+    const ctx = ensureAudio();
+    if (!ctx || muted) return;
+    const t0 = ctx.currentTime + delay;
+    const bufSize = Math.floor(ctx.sampleRate * dur);
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufSize);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const filt = ctx.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.frequency.setValueAtTime(filterFreq, t0);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(gain, t0);
+    g.gain.linearRampToValueAtTime(0, t0 + dur);
+    src.connect(filt).connect(g).connect(ctx.destination);
+    src.start(t0);
+    src.stop(t0 + dur + 0.02);
+  }
+
+  const SFX = {
+    flap() {
+      // short upward whoosh
+      playTone({ freq: 600, endFreq: 300, type: 'triangle', dur: 0.09, gain: 0.14 });
+      playNoise({ dur: 0.08, gain: 0.06, filterFreq: 1200 });
+    },
+    score() {
+      // two-tone ding
+      playTone({ freq: 880, type: 'square', dur: 0.07, gain: 0.12 });
+      playTone({ freq: 1320, type: 'square', dur: 0.1, gain: 0.12, delay: 0.06 });
+    },
+    hit() {
+      // harsh crash
+      playTone({ freq: 180, endFreq: 60, type: 'sawtooth', dur: 0.18, gain: 0.25 });
+      playNoise({ dur: 0.18, gain: 0.18, filterFreq: 900 });
+    },
+    die() {
+      // descending sad tone
+      playTone({ freq: 400, endFreq: 90, type: 'square', dur: 0.45, gain: 0.18, delay: 0.1 });
+    },
+    swoosh() {
+      playNoise({ dur: 0.2, gain: 0.1, filterFreq: 1500 });
+    },
+  };
+
   // --- Game state ---
   const STATE = { READY: 0, PLAY: 1, OVER: 2 };
   let state = STATE.READY;
@@ -273,12 +352,17 @@
     if (state === STATE.READY) {
       state = STATE.PLAY;
       spawnPipe();
+      SFX.swoosh();
     }
     if (state === STATE.PLAY) {
       bird.vy = FLAP;
+      SFX.flap();
     } else if (state === STATE.OVER) {
       // small delay before accepting restart
-      if (overTimer > 30) reset();
+      if (overTimer > 30) {
+        reset();
+        SFX.swoosh();
+      }
     }
   }
 
@@ -315,6 +399,7 @@
         if (!p.passed && p.x + PIPE_W < bird.x) {
           p.passed = true;
           score++;
+          SFX.score();
         }
       }
       pipes = pipes.filter(p => p.x + PIPE_W > -10);
@@ -366,6 +451,8 @@
     state = STATE.OVER;
     overTimer = 0;
     flashAlpha = 1;
+    SFX.hit();
+    SFX.die();
     if (score > best) {
       best = score;
       localStorage.setItem('flappy_best', String(best));
@@ -501,6 +588,13 @@
       }
     }
 
+    // Mute indicator (top-right)
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 10px "Courier New", monospace';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillText(muted ? '[M] MUTED' : '[M] SOUND', W - 4, 4);
+
     // White flash
     if (flashAlpha > 0) {
       ctx.fillStyle = `rgba(255,255,255,${flashAlpha})`;
@@ -523,6 +617,8 @@
     if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
       e.preventDefault();
       flap();
+    } else if (e.code === 'KeyM') {
+      muted = !muted;
     }
   });
   canvas.addEventListener('mousedown', onPress);
