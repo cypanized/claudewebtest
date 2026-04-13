@@ -235,20 +235,45 @@
   // --- Sound effects (Web Audio) ---
   let audioCtx = null;
   let muted = false;
+  let audioReady = false;
   function ensureAudio() {
     if (!audioCtx) {
       try {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      } catch (e) { audioCtx = null; }
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        audioCtx = new AC();
+      } catch (e) { audioCtx = null; return null; }
     }
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().then(() => { audioReady = true; });
+    } else {
+      audioReady = true;
+    }
     return audioCtx;
   }
+  // Eagerly initialize on first user interaction (autoplay policy)
+  function primeAudio() {
+    ensureAudio();
+    if (audioCtx) {
+      // Play an inaudible tick to fully unlock on iOS / Safari
+      try {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        g.gain.value = 0.0001;
+        osc.connect(g).connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.01);
+      } catch (e) {}
+    }
+  }
+  ['pointerdown', 'mousedown', 'touchstart', 'keydown'].forEach(ev => {
+    window.addEventListener(ev, primeAudio, { capture: true });
+  });
 
-  function playTone({ freq = 440, endFreq = null, type = 'square', dur = 0.1, gain = 0.15, attack = 0.005, release = 0.05, delay = 0 }) {
+  function playTone({ freq = 440, endFreq = null, type = 'square', dur = 0.1, gain = 0.25, attack = 0.005, release = 0.05, delay = 0 }) {
     const ctx = ensureAudio();
     if (!ctx || muted) return;
-    const t0 = ctx.currentTime + delay;
+    const t0 = Math.max(ctx.currentTime, 0) + delay;
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
     osc.type = type;
@@ -265,10 +290,10 @@
     osc.stop(t0 + dur + 0.02);
   }
 
-  function playNoise({ dur = 0.15, gain = 0.2, filterFreq = 2000, delay = 0 }) {
+  function playNoise({ dur = 0.15, gain = 0.3, filterFreq = 2000, delay = 0 }) {
     const ctx = ensureAudio();
     if (!ctx || muted) return;
-    const t0 = ctx.currentTime + delay;
+    const t0 = Math.max(ctx.currentTime, 0) + delay;
     const bufSize = Math.floor(ctx.sampleRate * dur);
     const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
     const data = buf.getChannelData(0);
@@ -288,26 +313,22 @@
 
   const SFX = {
     flap() {
-      // short upward whoosh
-      playTone({ freq: 600, endFreq: 300, type: 'triangle', dur: 0.09, gain: 0.14 });
-      playNoise({ dur: 0.08, gain: 0.06, filterFreq: 1200 });
+      playTone({ freq: 700, endFreq: 350, type: 'triangle', dur: 0.09, gain: 0.3 });
+      playNoise({ dur: 0.08, gain: 0.12, filterFreq: 1400 });
     },
     score() {
-      // two-tone ding
-      playTone({ freq: 880, type: 'square', dur: 0.07, gain: 0.12 });
-      playTone({ freq: 1320, type: 'square', dur: 0.1, gain: 0.12, delay: 0.06 });
+      playTone({ freq: 880, type: 'square', dur: 0.07, gain: 0.25 });
+      playTone({ freq: 1320, type: 'square', dur: 0.1, gain: 0.25, delay: 0.06 });
     },
     hit() {
-      // harsh crash
-      playTone({ freq: 180, endFreq: 60, type: 'sawtooth', dur: 0.18, gain: 0.25 });
-      playNoise({ dur: 0.18, gain: 0.18, filterFreq: 900 });
+      playTone({ freq: 180, endFreq: 50, type: 'sawtooth', dur: 0.2, gain: 0.4 });
+      playNoise({ dur: 0.2, gain: 0.3, filterFreq: 900 });
     },
     die() {
-      // descending sad tone
-      playTone({ freq: 400, endFreq: 90, type: 'square', dur: 0.45, gain: 0.18, delay: 0.1 });
+      playTone({ freq: 420, endFreq: 90, type: 'square', dur: 0.5, gain: 0.3, delay: 0.12 });
     },
     swoosh() {
-      playNoise({ dur: 0.2, gain: 0.1, filterFreq: 1500 });
+      playNoise({ dur: 0.2, gain: 0.18, filterFreq: 1500 });
     },
   };
 
