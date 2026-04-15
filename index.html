@@ -199,36 +199,145 @@
     return c;
   })();
 
-  // Background (buildings + bushes silhouette)
+  // Background (sky, sun, mountains, city, trees) - wider for parallax
   const bgCanvas = (() => {
     const c = document.createElement('canvas');
-    c.width = W; c.height = PLAY_H;
+    c.width = W * 2; c.height = PLAY_H;
     const g = c.getContext('2d');
-    g.fillStyle = '#4ec0ca'; g.fillRect(0, 0, c.width, c.height);
-    // Distant clouds
+
+    // Sky gradient
+    const sky = g.createLinearGradient(0, 0, 0, PLAY_H);
+    sky.addColorStop(0, '#3ca4b0');
+    sky.addColorStop(0.5, '#70c5ce');
+    sky.addColorStop(1, '#c4e0c8');
+    g.fillStyle = sky;
+    g.fillRect(0, 0, c.width, PLAY_H);
+
+    // Sun with soft halo
+    const sunX = 210, sunY = 80;
+    for (let r = 40; r >= 20; r -= 5) {
+      g.fillStyle = `rgba(255, 244, 176, ${0.08 + (40 - r) * 0.01})`;
+      g.beginPath(); g.arc(sunX, sunY, r, 0, Math.PI * 2); g.fill();
+    }
+    g.fillStyle = '#fff4b0';
+    g.beginPath(); g.arc(sunX, sunY, 18, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#ffe878';
+    g.beginPath(); g.arc(sunX, sunY, 12, 0, Math.PI * 2); g.fill();
+
+    // Distant mountain range (pixel-jagged)
+    function drawMountains(baseY, color, step, minH, maxH, seed) {
+      g.fillStyle = color;
+      const pts = [];
+      for (let x = 0; x <= c.width + step; x += step) {
+        const h = minH + ((x * seed + 97) % (maxH - minH));
+        pts.push([x, baseY - h]);
+      }
+      g.beginPath();
+      g.moveTo(0, baseY);
+      for (const [x, y] of pts) g.lineTo(x, y);
+      g.lineTo(c.width, baseY);
+      g.closePath();
+      g.fill();
+    }
+    drawMountains(PLAY_H - 70, '#8eb0b8', 50, 40, 90, 13);
+    drawMountains(PLAY_H - 60, '#6a949e', 70, 30, 70, 23);
+
+    // Snow caps on back range
     g.fillStyle = '#ffffff';
-    const clouds = [[30, 80, 40, 10], [120, 60, 50, 12], [220, 100, 36, 10], [200, 160, 46, 10]];
-    for (const [x, y, w, h] of clouds) {
-      g.fillRect(x, y, w, h);
-      g.fillRect(x + 6, y - 4, w - 12, 4);
-      g.fillRect(x + 10, y - 8, w - 20, 4);
-      g.fillRect(x + 4, y + h, w - 8, 3);
+    for (let x = 20; x < c.width; x += 140) {
+      const peakH = 40 + ((x * 13 + 97) % 50);
+      const peakY = PLAY_H - 70 - peakH;
+      g.fillRect(x + 22, peakY + 6, 8, 3);
+      g.fillRect(x + 20, peakY + 9, 12, 2);
     }
-    // City silhouette
-    const skyline = PLAY_H - 60;
-    g.fillStyle = '#6bb6c0';
+
+    // Clouds
+    function drawCloud(x, y, s) {
+      g.fillStyle = '#ffffff';
+      g.fillRect(x + 6 * s, y, 24 * s, 10 * s);
+      g.fillRect(x + 2 * s, y + 4 * s, 32 * s, 6 * s);
+      g.fillRect(x + 10 * s, y - 4 * s, 16 * s, 4 * s);
+      g.fillRect(x + 14 * s, y - 8 * s, 10 * s, 4 * s);
+      // underside shadow
+      g.fillStyle = '#d8e4e8';
+      g.fillRect(x + 4 * s, y + 8 * s, 28 * s, 3 * s);
+    }
+    const clouds = [[40, 50, 1], [150, 90, 0.8], [310, 40, 1.1], [430, 100, 0.9], [520, 60, 1]];
+    for (const [x, y, s] of clouds) drawCloud(x, y, s);
+
+    // City buildings (two layers)
+    const cityBase = PLAY_H - 42;
+    // Back layer
     for (let x = 0; x < c.width; x += 24) {
-      const h = 20 + ((x * 7) % 30);
-      g.fillRect(x, skyline + (40 - h), 22, h);
+      const h = 32 + ((x * 7 + 11) % 44);
+      g.fillStyle = '#5b9aa4';
+      g.fillRect(x, cityBase - h, 22, h);
+      g.fillStyle = '#4a8692';
+      g.fillRect(x, cityBase - h, 2, h);
+      g.fillRect(x + 20, cityBase - h, 2, h);
+      // roof
+      g.fillStyle = '#3f7680';
+      g.fillRect(x, cityBase - h, 22, 3);
+      // windows
+      g.fillStyle = '#f8e040';
+      for (let wy = cityBase - h + 8; wy < cityBase - 6; wy += 7) {
+        for (let wx = x + 4; wx < x + 19; wx += 5) {
+          if (((wx + wy) * 13) % 5 !== 0) g.fillRect(wx, wy, 2, 3);
+        }
+      }
     }
-    // Bushes
-    g.fillStyle = '#74bf2e';
-    for (let x = 0; x < c.width; x += 20) {
-      const h = 16 + ((x * 5) % 10);
-      g.fillRect(x, PLAY_H - h - 2, 20, h);
+    // Foreground buildings (slightly forward, taller-looking via darker color)
+    for (let x = -12; x < c.width; x += 36) {
+      const h = 22 + ((x * 11 + 31) % 30);
+      g.fillStyle = '#3e7680';
+      g.fillRect(x, cityBase - h + 8, 32, h);
+      g.fillStyle = '#2c5a64';
+      g.fillRect(x + 30, cityBase - h + 8, 2, h);
+      // antenna on some
+      if ((x & 1) === 0) {
+        g.fillStyle = '#1a3a44';
+        g.fillRect(x + 14, cityBase - h + 2, 2, 8);
+      }
+      // windows
+      g.fillStyle = '#ffd040';
+      for (let wy = cityBase - h + 14; wy < cityBase + 5; wy += 6) {
+        for (let wx = x + 3; wx < x + 30; wx += 5) {
+          if (((wx * 7 + wy * 3)) % 4 !== 0) g.fillRect(wx, wy, 2, 2);
+        }
+      }
     }
-    g.fillStyle = '#558022';
+
+    // Tree line behind bushes
+    function drawTree(x, baseY) {
+      g.fillStyle = '#3a5020';
+      g.fillRect(x + 5, baseY - 6, 4, 8);           // trunk
+      g.fillStyle = '#558022';
+      g.fillRect(x + 2, baseY - 22, 10, 16);        // lower foliage
+      g.fillRect(x, baseY - 18, 14, 10);
+      g.fillStyle = '#74bf2e';
+      g.fillRect(x + 2, baseY - 26, 8, 6);          // top foliage
+      g.fillRect(x + 4, baseY - 30, 6, 4);
+      g.fillStyle = '#8fd440';
+      g.fillRect(x + 4, baseY - 26, 2, 8);          // highlight
+    }
+    for (let x = -4; x < c.width; x += 38) {
+      drawTree(x + ((x * 5) % 10), PLAY_H - 12);
+    }
+
+    // Foreground bushes
+    for (let x = 0; x < c.width; x += 22) {
+      const h = 14 + ((x * 5 + 7) % 8);
+      g.fillStyle = '#558022';
+      g.fillRect(x, PLAY_H - h - 2, 22, h);
+      g.fillStyle = '#74bf2e';
+      g.fillRect(x + 1, PLAY_H - h - 1, 20, h - 3);
+      g.fillStyle = '#8fd440';
+      g.fillRect(x + 3, PLAY_H - h + 1, 3, 4);
+      g.fillRect(x + 12, PLAY_H - h + 2, 2, 3);
+    }
+    g.fillStyle = '#3a5020';
     g.fillRect(0, PLAY_H - 4, c.width, 4);
+
     return c;
   })();
 
@@ -345,6 +454,7 @@
   let bird = { x: 70, y: PLAY_H / 2, vy: 0, rot: 0, frame: 0, frameTimer: 0 };
   let pipes = [];
   let groundX = 0;
+  let bgX = 0;
   let score = 0;
   let best = +(localStorage.getItem('flappy_best') || 0);
   let spawnTimer = 0;
@@ -402,6 +512,7 @@
       bird.y = PLAY_H / 2 + Math.sin(Date.now() / 200) * 6;
       bird.rot = 0;
       groundX = (groundX - PIPE_SPEED) % 24;
+      bgX = (bgX - PIPE_SPEED * 0.25) % (W * 2);
     } else if (state === STATE.PLAY) {
       bird.vy += GRAVITY;
       bird.y += bird.vy;
@@ -427,6 +538,7 @@
 
       // ground scroll
       groundX = (groundX - PIPE_SPEED) % 24;
+      bgX = (bgX - PIPE_SPEED * 0.25) % (W * 2);
 
       // collisions
       if (bird.y + BIRD_H / 2 >= PLAY_H) {
@@ -570,7 +682,8 @@
 
   function render() {
     // Sky background
-    ctx.drawImage(bgCanvas, 0, 0);
+    ctx.drawImage(bgCanvas, bgX, 0);
+    ctx.drawImage(bgCanvas, bgX + bgCanvas.width, 0);
 
     // Pipes
     for (const p of pipes) drawPipePair(p);
