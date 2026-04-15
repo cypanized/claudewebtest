@@ -22,7 +22,7 @@
   }
   #game {
     display: block;
-    background: #4ec0ca;
+    background: #2d1b4e;
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
     image-rendering: crisp-edges;
@@ -176,14 +176,14 @@
     const c = document.createElement('canvas');
     c.width = W * 2; c.height = GROUND_H;
     const g = c.getContext('2d');
-    // Top grass strip
-    g.fillStyle = '#ded895'; g.fillRect(0, 0, c.width, GROUND_H);
-    // Green top band
-    g.fillStyle = '#74bf2e'; g.fillRect(0, 0, c.width, 12);
-    g.fillStyle = '#dcf080'; g.fillRect(0, 8, c.width, 2);
-    g.fillStyle = '#558022'; g.fillRect(0, 12, c.width, 3);
-    // Dirt / sand pattern
-    g.fillStyle = '#c9b876';
+    // Warm dusk ground
+    g.fillStyle = '#c87860'; g.fillRect(0, 0, c.width, GROUND_H);
+    // Dark grass/moss top band (silhouetted)
+    g.fillStyle = '#2a1428'; g.fillRect(0, 0, c.width, 12);
+    g.fillStyle = '#ff9058'; g.fillRect(0, 8, c.width, 2);
+    g.fillStyle = '#1a0a18'; g.fillRect(0, 12, c.width, 3);
+    // Warm dirt pattern
+    g.fillStyle = '#a85840';
     for (let i = 0; i < c.width; i += 24) {
       g.fillRect(i, 20, 12, 4);
       g.fillRect(i + 14, 30, 8, 4);
@@ -194,7 +194,7 @@
       g.fillRect(i + 6, 96, 10, 4);
     }
     // Bottom darker edge
-    g.fillStyle = '#a08860'; g.fillRect(0, GROUND_H - 6, c.width, 6);
+    g.fillStyle = '#6a3828'; g.fillRect(0, GROUND_H - 6, c.width, 6);
     g.fillStyle = '#000000'; g.fillRect(0, 15, c.width, 1);
     return c;
   })();
@@ -205,24 +205,28 @@
     c.width = W * 2; c.height = PLAY_H;
     const g = c.getContext('2d');
 
-    // Sky gradient
+    // Sunset sky gradient
     const sky = g.createLinearGradient(0, 0, 0, PLAY_H);
-    sky.addColorStop(0, '#3ca4b0');
-    sky.addColorStop(0.5, '#70c5ce');
-    sky.addColorStop(1, '#c4e0c8');
+    sky.addColorStop(0, '#2d1b4e');
+    sky.addColorStop(0.35, '#7a3a70');
+    sky.addColorStop(0.65, '#e26a6a');
+    sky.addColorStop(0.9, '#f8a847');
+    sky.addColorStop(1, '#fbd58a');
     g.fillStyle = sky;
     g.fillRect(0, 0, c.width, PLAY_H);
 
-    // Sun with soft halo
-    const sunX = 210, sunY = 80;
-    for (let r = 40; r >= 20; r -= 5) {
-      g.fillStyle = `rgba(255, 244, 176, ${0.08 + (40 - r) * 0.01})`;
+    // Low sun on horizon with warm halo
+    const sunX = 220, sunY = PLAY_H - 130;
+    for (let r = 50; r >= 26; r -= 4) {
+      g.fillStyle = `rgba(255, 180, 110, ${0.06 + (50 - r) * 0.012})`;
       g.beginPath(); g.arc(sunX, sunY, r, 0, Math.PI * 2); g.fill();
     }
-    g.fillStyle = '#fff4b0';
-    g.beginPath(); g.arc(sunX, sunY, 18, 0, Math.PI * 2); g.fill();
-    g.fillStyle = '#ffe878';
-    g.beginPath(); g.arc(sunX, sunY, 12, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#ff8850';
+    g.beginPath(); g.arc(sunX, sunY, 22, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#ffb060';
+    g.beginPath(); g.arc(sunX, sunY, 14, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#ffe098';
+    g.beginPath(); g.arc(sunX, sunY, 7, 0, Math.PI * 2); g.fill();
 
     // Distant mountain range (pixel-jagged)
     function drawMountains(baseY, color, step, minH, maxH, seed) {
@@ -239,67 +243,71 @@
       g.closePath();
       g.fill();
     }
-    drawMountains(PLAY_H - 70, '#8eb0b8', 50, 40, 90, 13);
-    drawMountains(PLAY_H - 60, '#6a949e', 70, 30, 70, 23);
+    drawMountains(PLAY_H - 70, '#6a3868', 50, 40, 90, 13);
+    drawMountains(PLAY_H - 60, '#3e1f3e', 70, 30, 70, 23);
 
-    // Snow caps on back range
-    g.fillStyle = '#ffffff';
+    // Warm light catching peaks (sun-side)
+    g.fillStyle = '#ffb070';
     for (let x = 20; x < c.width; x += 140) {
       const peakH = 40 + ((x * 13 + 97) % 50);
       const peakY = PLAY_H - 70 - peakH;
-      g.fillRect(x + 22, peakY + 6, 8, 3);
-      g.fillRect(x + 20, peakY + 9, 12, 2);
+      g.fillRect(x + 22, peakY + 6, 8, 2);
+      g.fillRect(x + 20, peakY + 8, 10, 2);
     }
 
-    // Clouds
+    // Sunset-lit clouds
     function drawCloud(x, y, s) {
-      g.fillStyle = '#ffffff';
+      g.fillStyle = '#ffc7a0';
       g.fillRect(x + 6 * s, y, 24 * s, 10 * s);
       g.fillRect(x + 2 * s, y + 4 * s, 32 * s, 6 * s);
       g.fillRect(x + 10 * s, y - 4 * s, 16 * s, 4 * s);
       g.fillRect(x + 14 * s, y - 8 * s, 10 * s, 4 * s);
+      // top highlight (sun-lit)
+      g.fillStyle = '#ffe6c0';
+      g.fillRect(x + 12 * s, y - 8 * s, 8 * s, 2 * s);
+      g.fillRect(x + 8 * s, y - 2 * s, 14 * s, 2 * s);
       // underside shadow
-      g.fillStyle = '#d8e4e8';
+      g.fillStyle = '#8a4060';
       g.fillRect(x + 4 * s, y + 8 * s, 28 * s, 3 * s);
     }
     const clouds = [[40, 50, 1], [150, 90, 0.8], [310, 40, 1.1], [430, 100, 0.9], [520, 60, 1]];
     for (const [x, y, s] of clouds) drawCloud(x, y, s);
 
-    // City buildings (two layers)
+    // City silhouettes (two layers, dark against sunset)
     const cityBase = PLAY_H - 42;
     // Back layer
     for (let x = 0; x < c.width; x += 24) {
       const h = 32 + ((x * 7 + 11) % 44);
-      g.fillStyle = '#5b9aa4';
+      g.fillStyle = '#3a1c42';
       g.fillRect(x, cityBase - h, 22, h);
-      g.fillStyle = '#4a8692';
+      g.fillStyle = '#2a1030';
       g.fillRect(x, cityBase - h, 2, h);
       g.fillRect(x + 20, cityBase - h, 2, h);
       // roof
-      g.fillStyle = '#3f7680';
+      g.fillStyle = '#1f0824';
       g.fillRect(x, cityBase - h, 22, 3);
-      // windows
-      g.fillStyle = '#f8e040';
+      // lit windows (warm)
+      g.fillStyle = '#ffd060';
       for (let wy = cityBase - h + 8; wy < cityBase - 6; wy += 7) {
         for (let wx = x + 4; wx < x + 19; wx += 5) {
           if (((wx + wy) * 13) % 5 !== 0) g.fillRect(wx, wy, 2, 3);
         }
       }
     }
-    // Foreground buildings (slightly forward, taller-looking via darker color)
+    // Foreground buildings
     for (let x = -12; x < c.width; x += 36) {
       const h = 22 + ((x * 11 + 31) % 30);
-      g.fillStyle = '#3e7680';
+      g.fillStyle = '#1a0820';
       g.fillRect(x, cityBase - h + 8, 32, h);
-      g.fillStyle = '#2c5a64';
+      g.fillStyle = '#0a0312';
       g.fillRect(x + 30, cityBase - h + 8, 2, h);
       // antenna on some
       if ((x & 1) === 0) {
-        g.fillStyle = '#1a3a44';
+        g.fillStyle = '#000000';
         g.fillRect(x + 14, cityBase - h + 2, 2, 8);
       }
-      // windows
-      g.fillStyle = '#ffd040';
+      // lit windows (brighter orange)
+      g.fillStyle = '#ffb848';
       for (let wy = cityBase - h + 14; wy < cityBase + 5; wy += 6) {
         for (let wx = x + 3; wx < x + 30; wx += 5) {
           if (((wx * 7 + wy * 3)) % 4 !== 0) g.fillRect(wx, wy, 2, 2);
@@ -307,35 +315,37 @@
       }
     }
 
-    // Tree line behind bushes
+    // Tree silhouettes behind bushes (warm rim light)
     function drawTree(x, baseY) {
-      g.fillStyle = '#3a5020';
+      g.fillStyle = '#14060e';
       g.fillRect(x + 5, baseY - 6, 4, 8);           // trunk
-      g.fillStyle = '#558022';
-      g.fillRect(x + 2, baseY - 22, 10, 16);        // lower foliage
+      g.fillStyle = '#1f0a20';
+      g.fillRect(x + 2, baseY - 22, 10, 16);
       g.fillRect(x, baseY - 18, 14, 10);
-      g.fillStyle = '#74bf2e';
-      g.fillRect(x + 2, baseY - 26, 8, 6);          // top foliage
+      g.fillStyle = '#2e1432';
+      g.fillRect(x + 2, baseY - 26, 8, 6);
       g.fillRect(x + 4, baseY - 30, 6, 4);
-      g.fillStyle = '#8fd440';
-      g.fillRect(x + 4, baseY - 26, 2, 8);          // highlight
+      // warm rim light on sun-facing edge
+      g.fillStyle = '#ff9058';
+      g.fillRect(x + 12, baseY - 22, 2, 10);
+      g.fillRect(x + 9, baseY - 28, 2, 4);
     }
     for (let x = -4; x < c.width; x += 38) {
       drawTree(x + ((x * 5) % 10), PLAY_H - 12);
     }
 
-    // Foreground bushes
+    // Foreground bushes (dark silhouette, orange-tinted highlights)
     for (let x = 0; x < c.width; x += 22) {
       const h = 14 + ((x * 5 + 7) % 8);
-      g.fillStyle = '#558022';
+      g.fillStyle = '#0c0410';
       g.fillRect(x, PLAY_H - h - 2, 22, h);
-      g.fillStyle = '#74bf2e';
+      g.fillStyle = '#1d0a22';
       g.fillRect(x + 1, PLAY_H - h - 1, 20, h - 3);
-      g.fillStyle = '#8fd440';
-      g.fillRect(x + 3, PLAY_H - h + 1, 3, 4);
-      g.fillRect(x + 12, PLAY_H - h + 2, 2, 3);
+      g.fillStyle = '#ff9858';
+      g.fillRect(x + 3, PLAY_H - h + 1, 3, 2);
+      g.fillRect(x + 12, PLAY_H - h + 2, 2, 2);
     }
-    g.fillStyle = '#3a5020';
+    g.fillStyle = '#000000';
     g.fillRect(0, PLAY_H - 4, c.width, 4);
 
     return c;
